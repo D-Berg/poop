@@ -18,6 +18,7 @@ const usage_text =
     \\
 ;
 
+// TODO: bring back deleted code for linux
 const Command = struct {
     raw_cmd: []const u8,
     argv: []const []const u8,
@@ -130,6 +131,7 @@ pub fn main() !void {
     }
 
     std.debug.print("progressbar.init\n", .{});
+    // TODO: fix progressbar for mac
     // var bar = try progress.ProgressBar.init(arena, stdout);
 
     const tty_conf: std.io.tty.Config = switch (color) {
