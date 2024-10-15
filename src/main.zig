@@ -135,7 +135,6 @@ pub fn main() !void {
 
     std.debug.print("progressbar.init\n", .{});
     // var bar = try progress.ProgressBar.init(arena, stdout);
-    std.debug.print("hello from dan\n", .{});
 
     const tty_conf: std.io.tty.Config = switch (color) {
         .auto => std.io.tty.detectConfig(stdout),
