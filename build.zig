@@ -12,6 +12,7 @@ pub fn build(b: *std.Build) void {
         .strip = b.option(bool, "strip", "strip the binary"),
     });
 
+
     b.installArtifact(exe);
 
     const release = b.step("release", "make an upstream binary release");
