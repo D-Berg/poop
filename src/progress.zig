@@ -1,4 +1,5 @@
 const std = @import("std");
+const log = std.log.scoped(.@"progress");
 
 const Spinner = struct {
     const Self = @This();
@@ -24,7 +25,8 @@ const Spinner = struct {
 const bar = "━";
 const half_bar_left = "╸";
 const half_bar_right = "╺";
-const TIOCGWINSZ: u32 = 0x5413; // https://docs.rs/libc/latest/libc/constant.TIOCGWINSZ.html
+// const TIOCGWINSZ: u32 = 0x5413; // https://docs.rs/libc/latest/libc/constant.TIOCGWINSZ.html
+const TIOCGWINSZ: u32 = 0x40087468;
 const WIDTH_PADDING: usize = 100;
 
 const Winsize = extern struct {
@@ -36,7 +38,9 @@ const Winsize = extern struct {
 
 pub fn getScreenWidth(stdout: std.posix.fd_t) usize {
     var winsize: Winsize = undefined;
-    _ = std.os.linux.ioctl(stdout, TIOCGWINSZ, @intFromPtr(&winsize));
+    // _ = std.os.linux.ioctl(stdout, TIOCGWINSZ, @intFromPtr(&winsize));
+    _ = std.c.ioctl(stdout, TIOCGWINSZ, @intFromPtr(&winsize));
+    log.debug("screenWidth = {}", .{winsize.ws_col});
     return @intCast(winsize.ws_col);
 }
 

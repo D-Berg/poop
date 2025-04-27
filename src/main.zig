@@ -5,6 +5,7 @@ const builtin = @import("builtin");
 const assert = std.debug.assert;
 const progress = @import("./progress.zig");
 const MAX_SAMPLES = 10000;
+const log = std.log.scoped(.@"main");
 
 const usage_text =
     \\Usage: poop [options] <command1> ... <commandN>
@@ -134,15 +135,17 @@ pub fn main() !void {
         std.process.exit(1);
     }
 
-    std.debug.print("progressbar.init\n", .{});
+    log.debug("progressbar.init\n", .{});
     // TODO: fix progressbar for mac
-    // var bar = try progress.ProgressBar.init(arena, stdout);
+    var bar = try progress.ProgressBar.init(arena, stdout);
 
     const tty_conf: std.io.tty.Config = switch (color) {
         .auto => std.io.tty.detectConfig(stdout),
         .never => .no_color,
         .ansi => .escape_codes,
     };
+
+    log.debug("tty_conf = .{}", .{tty_conf});
 
     var samples_buf: [MAX_SAMPLES]Sample = undefined;
 
@@ -173,7 +176,7 @@ pub fn main() !void {
             (timer.read() - first_start) < max_nano_seconds) and
             sample_index < samples_buf.len) : (sample_index += 1)
         {
-            // if (tty_conf != .no_color) try bar.render();
+            if (tty_conf != .no_color) try bar.render();
 
             var child = std.process.Child.init(command.argv, arena);
 
@@ -261,21 +264,21 @@ pub fn main() !void {
             };
 
             if (tty_conf != .no_color) {
-                // bar.estimate = est_total: {
-                //     const cur_samples: u64 = sample_index + 1;
-                //     const ns_per_sample = (timer.read() - first_start) / cur_samples;
-                //     const estimate = std.math.divCeil(u64, max_nano_seconds, ns_per_sample) catch unreachable;
-                //     break :est_total @intCast(@min(MAX_SAMPLES, @max(cur_samples, estimate, min_samples)));
-                // };
-                // bar.current += 1;
+                bar.estimate = est_total: {
+                    const cur_samples: u64 = sample_index + 1;
+                    const ns_per_sample = (timer.read() - first_start) / cur_samples;
+                    const estimate = std.math.divCeil(u64, max_nano_seconds, ns_per_sample) catch unreachable;
+                    break :est_total @intCast(@min(MAX_SAMPLES, @max(cur_samples, estimate, min_samples)));
+                };
+                bar.current += 1;
             }
         }
 
         if (tty_conf != .no_color) {
             // reset bar for next command
-            // try bar.clear();
-            // bar.current = 0;
-            // bar.estimate = 1;
+            try bar.clear();
+            bar.current = 0;
+            bar.estimate = 1;
         }
 
         const all_samples = samples_buf[0..sample_index];
@@ -334,7 +337,7 @@ pub fn main() !void {
 
             try stdout_w.writeAll("\n");
 
-            inline for (@typeInfo(Command.Measurements).Struct.fields) |field| {
+            inline for (@typeInfo(Command.Measurements).@"struct".fields) |field| {
                 const measurement = @field(command.measurements, field.name);
                 const first_measurement = if (command_n == 1)
                     null
